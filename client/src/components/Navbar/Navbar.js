@@ -8,6 +8,7 @@ import axios from "axios";
 import moment from 'moment'
 import Slider from "rc-slider";
 
+import 'rc-slider/assets/index.css'
 import "react-datepicker/dist/react-datepicker.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Navbar.css";
@@ -17,7 +18,6 @@ import { token } from "../../util/recoilState";
 import { eventSource } from "../../util/recoilState";
 import { mainCategories, categories, subCategories } from "../../util/Categories";
 import { moveToMain ,moveToMy, moveToBill } from "../../util/Route";
-import { Logout } from "./api/Logout";
 import { handleSearch, handleSearchClick } from "./search/search";
 
 import my from "../../Image/마이페이지.png"
@@ -45,7 +45,7 @@ function NavBar() {
   
   const [title, setTitle] = useState("");
   
-  const [capacity, setCapacity] = useState(0);
+  const [memberCapacity, setMemberCapacity] = useState(0);
   
   const [date, setDate] = useState("");
   
@@ -135,6 +135,7 @@ function NavBar() {
     event.preventDefault();
 
     const formData = new FormData();
+    var capacity = memberCapacity / 10;
     var closeRecruitDate = date.toString();
     var goingDate = currentMonth.toISOString().slice(0, 10);
     var comingDate = nextMonth.toISOString().slice(0, 10);
@@ -189,6 +190,34 @@ function NavBar() {
         });
     }
   };
+
+  function Logout() {
+    if(token !== null)
+    {
+        const postToData = {
+            token: token
+        }
+      axios
+      .post("/api/members/logout", postToData, {
+        headers:{
+        'Authorization': `Bearer ${token}`
+        }
+      })
+      .then((res) => {
+        console.log(res);
+        alert("정상적으로 로그아웃 되었습니다.");
+        localStorage.setItem("vest", 0);
+        localStorage.setItem("name", "");
+        window.location.href = "/";
+      })
+      .catch((error) => {
+        console.log(error);
+        alert("서버와의 연결이 끊어졌습니다.");
+        localStorage.setItem("vest", 0);
+        localStorage.setItem("name", "");
+      });
+    }
+}
 
   useEffect(() => {
     const eventSource = new EventSourcePolyfill('/api/sub',{
@@ -420,8 +449,8 @@ function NavBar() {
                   <div>
                   <Form.Group controlId="formCapacity">
                     <Form.Label>모집 인원</Form.Label>
-                      <Slider onChange={(e) => setCapacity(e)} />
-                      {Math.ceil(capacity / 10)}명    
+                      <Slider onChange={(e) => setMemberCapacity(e)} />
+                      {Math.ceil(memberCapacity / 10)}명    
                   </Form.Group>
                 </div>
                 <br />

@@ -60,7 +60,7 @@ function MyPage() {
   
   const [withdrawModal, setWithdrawModal] = useState(false);
 
-  const [accompanyList, setAccompanyList] = useState(["1","2","3","4","5"]) // 동행 신청 현황
+  const [accompanyList, setAccompanyList] = useState([]) // 동행 신청 현황
 
   var ranklist = "";
   var size = posts.length;
@@ -88,6 +88,35 @@ function MyPage() {
   }, []);
 
   useEffect(() => {
+  
+  const fetchData = async () => {
+    const response = await axios.get("/api/trip/accompany/requestList",{
+      headers:{'Authorization': `Bearer ${token}` },
+    })
+    console.log(typeof(response.data))
+
+    if(response.data.length > 0)
+    {
+      
+      const accompany = {
+        comment: response.data[0].comment,
+        comment_id: response.data[0].comment_id,
+        senderName: response.data[0].senderName,
+        tripName: response.data[0].tripName,
+        tripUUID: response.data[0].tripUUID
+      }
+
+      console.log(accompany)
+
+      setAccompanyList([...accompanyList, accompany])
+    }
+  }
+  
+  fetchData()
+  
+  },[])
+
+  useEffect(() => {
     console.log(currentNumber);
     const fetchData = async () => {
       setLoading(true);
@@ -97,10 +126,7 @@ function MyPage() {
           headers: {'Authorization': `Bearer ${token}`},
         }
       );
-      console.log(response.data);
-      console.log(response.data.totalPages);
-      console.log(response.data.totalElements);
-      console.log(response.data.content);
+
       const postNumberArray = response.data.content.map((post) => post.id);
       setPostNumber(postNumberArray);
       setPosts(response.data.content);
@@ -310,6 +336,40 @@ function MyPage() {
       ).then((res) => console.log(res), alert("비밀번호가 변경되었습니다."));
   };
 
+  const responseAccompanyTrue = (id) => {
+
+    const check = true
+
+    const postToServer = {
+      comment_id: accompanyList.filter((item) => item.comment_id === id)[0].comment_id
+    }
+
+    axios.post(`/api/trip/responseAccompany/${check}`,postToServer,{
+      headers: {'Authorization': `Bearer ${token}`}
+    })
+    .then((res) => {
+      console.log(res)
+      alert('동행 신청을 허락하였습니다.')
+    })
+  }
+
+  const responseAccompanyFalse = (id) => {
+
+    const check = false
+
+    const postToServer = {
+      comment_id: accompanyList.filter((item) => item.comment_id === id)[0].comment_id
+    }
+
+    axios.post(`/api/trip/responseAccompany/${check}`,postToServer,{
+      headers: {'Authorization': `Bearer ${token}`}
+    })
+    .then((res) => {
+      console.log(res)
+      alert('동행 신청을 허락하였습니다.')
+    })
+  }
+
   const Posts = ({ posts, loading, handleClick }) => {
     return <>{loading ? "" : <ShowData />}</>;
   };
@@ -416,18 +476,17 @@ function MyPage() {
         <h5>선호태그 : {ranklist} </h5>
         <hr />
         <h4>동행 신청 현황</h4>
-          {accompanyList.map((item,idx) => 
+          {accompanyList.length > 0 && accompanyList.map((item,idx) => 
             <Card key={idx} style={{
               height: '100px'
             }} >
-              <h6>여행 일정 :</h6>
-              <h6>신청자 : </h6> 
-              <h6>신청 내용 : {item.length <= 50 ? item : item.slice(0,50) + '...'}</h6>
+              <h6>신청자 : {item.senderName}</h6> 
+              <h6>여행: {item.tripName}</h6>
+              {/* <h6>신청 내용 : {item.comment.length <= 50 ? item.comment : item.comment.slice(0,50) + '...'}</h6> */}
               <table>
                 <td><Button
                 onClick={(e) => {
-                  const updateList = accompanyList.filter((listItem) => listItem !== item)
-                  setAccompanyList(updateList);
+                  responseAccompanyTrue(item.comment_id)
                 }}
                 style={{
                   marginTop: '-15%',
@@ -438,8 +497,7 @@ function MyPage() {
               >O</Button></td>
                 <td>
                   <Button  onClick= {(e) => {
-                  const updateList = accompanyList.filter((listItem) => listItem !== item)
-                  setAccompanyList(updateList);
+                  responseAccompanyFalse(item.comment_id)
                   }} 
                   style={{marginTop: '-15%', marginLeft: '85%',width: '40px', height: '40px'}}>
                     X
