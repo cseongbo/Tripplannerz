@@ -37,7 +37,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 @RestController
@@ -52,7 +51,7 @@ public class TripController {
     private final MemberPartyRepository memberPartyRepository;
     private final SigunguRepository sigunguRepository;
     private final TripImageRepository tripImageRepository;
-    private final LocationService locationService;
+    private final AreaService locationService;
     private final CommentService commentService;
     private final SseEmitterService sseEmitterService;
     private final LoginService loginService;
@@ -118,8 +117,13 @@ public class TripController {
                                        @RequestParam("sortType") String sortType,
                                        @RequestParam("keyWord") String keyWord) {
 
-        PageRequest pageRequest = PageRequest.of(page, 2);
+        PageRequest pageRequest = PageRequest.of(page, 5);
         return memberService.findTrip(null, sortType, pageRequest, keyWord);
+    }
+
+    @GetMapping("/trip/entireTripList")
+    public List<MemberTrip> entireTrip() {
+        return memberService.getEntireTrip();
     }
 
     @GetMapping("/trip/locationList")
